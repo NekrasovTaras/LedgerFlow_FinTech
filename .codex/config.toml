@@ -1,0 +1,6 @@
+# Codex CLI 0.172.0; project-local settings only.
+# Parent permissions, model, provider and MCP connections remain inherited.
+[agents]
+enabled = true
+# This runtime offers four slots including the lead.
+max_concurrent_threads_per_session = 3

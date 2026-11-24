@@ -1,0 +1,39 @@
+# Local IDE and operating-system state
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# Dependencies and generated output
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+coverage/
+.coverage*
+dist/
+build/
+*.egg-info/
+artifacts/
+test-results/
+playwright-report/
+blob-report/
+.cache/
+*.log
+
+# Secrets, local databases and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+*.db
+.codex/*.local.toml
+.codex/agent-memory/

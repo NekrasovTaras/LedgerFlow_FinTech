@@ -1,0 +1,23 @@
+{
+  "name": "ledgerflow-fintech",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LedgerFlow development bootstrap and QA harness; product specification pending.",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "check:evidence": "node scripts/verify-playwright-evidence.mjs",
+    "preflight": "pwsh -NoProfile -File scripts/preflight.ps1",
+    "qa:serve": "node scripts/harness-server.mjs",
+    "browser:install": "node scripts/playwright.mjs install chromium",
+    "test:e2e": "node scripts/playwright.mjs test",
+    "test:e2e:headed": "node scripts/playwright.mjs test --headed",
+    "test:report": "node scripts/playwright.mjs show-report artifacts/playwright/headed/html-report --host 127.0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}
