@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
 from app.core.config import get_settings
+from app.core.observability import PROVIDER_DURATION
 from app.infrastructure.database import SessionLocal
 from app.infrastructure.models import ProviderCircuit
 
@@ -81,15 +82,21 @@ async def submit(name: str, operation_id: str, amount_minor: int, behavior: str)
             async with httpx.AsyncClient(
                 timeout=get_settings().provider_timeout_seconds, trust_env=False
             ) as client:
-                response = await client.post(
-                    f"{provider_url(name)}/payments",
-                    json={
-                        "operation_id": operation_id,
-                        "amount_minor": amount_minor,
-                        "currency": "RUB",
-                        "behavior": behavior,
-                    },
-                )
+                request_started = time.monotonic()
+                try:
+                    response = await client.post(
+                        f"{provider_url(name)}/payments",
+                        json={
+                            "operation_id": operation_id,
+                            "amount_minor": amount_minor,
+                            "currency": "RUB",
+                            "behavior": behavior,
+                        },
+                    )
+                finally:
+                    PROVIDER_DURATION.labels(provider=name).observe(
+                        time.monotonic() - request_started
+                    )
             latency = round((time.monotonic() - started) * 1000)
             payload = response.json()
             if not isinstance(payload, dict):
@@ -123,7 +130,11 @@ async def lookup(name: str, operation_id: str, amount_minor: int) -> dict[str, A
         async with httpx.AsyncClient(
             timeout=get_settings().provider_timeout_seconds, trust_env=False
         ) as client:
-            response = await client.get(f"{provider_url(name)}/payments/{operation_id}")
+            request_started = time.monotonic()
+            try:
+                response = await client.get(f"{provider_url(name)}/payments/{operation_id}")
+            finally:
+                PROVIDER_DURATION.labels(provider=name).observe(time.monotonic() - request_started)
             response.raise_for_status()
             payload = response.json()
             if isinstance(payload, dict) and payload.get("status") == "NOT_FOUND":

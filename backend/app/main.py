@@ -140,6 +140,9 @@ async def ready() -> dict[str, Any]:
 
 @app.get("/metrics", include_in_schema=False)
 async def metrics() -> Response:
+    from app.modules.operations.metrics import refresh_business_metrics
+
+    await refresh_business_metrics()
     return Response(generate_latest(), headers={"Content-Type": CONTENT_TYPE_LATEST})
 
 

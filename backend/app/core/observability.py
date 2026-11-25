@@ -9,17 +9,26 @@ from app.core.context import correlation_id
 
 HTTP_REQUESTS = Counter("ledgerflow_http_requests_total", "HTTP requests", ["method", "status"])
 HTTP_DURATION = Histogram("ledgerflow_http_request_duration_seconds", "Request latency in seconds")
-PAYMENTS = Counter("ledgerflow_payments_total", "Terminal payment transitions", ["status"])
-OUTBOX_BACKLOG = Gauge("ledgerflow_outbox_backlog", "Unpublished durable outbox events")
-WEBHOOK_FAILURES = Counter("ledgerflow_webhook_failures_total", "Webhook failed attempts")
+# Compatibility handles for callers that report local observations. The public
+# business series are exported from committed PostgreSQL facts by operations.metrics,
+# so an API scrape includes changes made by the separate worker/relay processes.
+PAYMENTS = Counter(
+    "ledgerflow_payments_total", "Local terminal payment observations", ["status"], registry=None
+)
+OUTBOX_BACKLOG = Gauge("ledgerflow_outbox_backlog", "Local outbox observation", registry=None)
+WEBHOOK_FAILURES = Counter(
+    "ledgerflow_webhook_failures_total", "Local webhook failure observations", registry=None
+)
 RECONCILIATION_DISCREPANCIES = Gauge(
-    "ledgerflow_reconciliation_discrepancies", "Latest reconciliation discrepancies"
+    "ledgerflow_reconciliation_discrepancies", "Local reconciliation observation", registry=None
 )
 INVARIANT_VIOLATIONS = Counter(
-    "ledgerflow_invariant_violations_total", "Observed invariant violations"
+    "ledgerflow_invariant_violations_total", "Local invariant violation observations", registry=None
 )
 PROVIDER_DURATION = Histogram(
-    "ledgerflow_provider_response_seconds", "Provider request latency", ["provider"]
+    "ledgerflow_provider_response_seconds",
+    "Provider HTTP latency observed by this process, including failed requests",
+    ["provider"],
 )
 
 

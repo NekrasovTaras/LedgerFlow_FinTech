@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### Operational verification
+
+- Exported committed cross-process business metrics and payment processing durations from PostgreSQL, with actual provider HTTP latency instrumentation and expanded Grafana panels.
+- Added a real PostgreSQL deadlock recovery regression and bounded serialization-abort retry exhaustion check.
+
 ### Chaos Lab
 
 - Added ten sandbox-only bounded experiments with persisted timelines, observed results, financial invariant checks and recovery instructions.

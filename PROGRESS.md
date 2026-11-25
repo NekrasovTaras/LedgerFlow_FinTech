@@ -1,5 +1,13 @@
 # Прогресс разработки
 
+## 2026-11-25 — Метрики фоновых процессов и transaction retry
+
+- **9 observability tests passed, 5.98s**: API `/metrics`, видимость committed/rollback фактов PostgreSQL, durable business counters, processing histogram, provider timeout/retry instrumentation и bounded labels. Evidence `artifacts/observability-tests.xml/.log`.
+- Business metrics используют согласованный read-only PostgreSQL snapshot и видят работу worker/outbox/scheduler. Process-local HTTP histograms явно обозначены. Grafana дополнена processing/provider panels; ADR0004 фиксирует решение и ограничение O(history) scrape.
+- **2 transaction recovery tests passed, 3.01s**: намеренный противоположный порядок row locks вызвал настоящий PostgreSQL `40P01`; вторая полная попытка создала один перевод, cached replay не создал повторного эффекта. Три явно инъецированных сервером `40001` исчерпали bounded retry без сохранённого idempotency result. Это два разных вида fault evidence, не заявления о естественном SSI-конфликте.
+- Ruff63files/format и mypy44sourcefiles PASS. Новый backend image ещё должен быть пересобран после окончания headed E2E; итоговый coverage будет измерен повторно после новых source files.
+- Chaos commit `4cd82ed` отправлен; его bootstrap GitHub Actions45642655960 success. Это по-прежнему отдельный baseline workflow, не новый product CI.
+
 ## 2026-11-25 — Общая backend-проверка и Chaos Lab
 
 - **181 passed, 275.19s**, общий прогон всех текущих backend tests, включая все10 bounded Chaos experiments и PostgreSQL concurrency/property-based checks. `artifacts/backend-full-tests.xml`, `.log`, `backend-coverage.xml`.
