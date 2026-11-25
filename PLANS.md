@@ -17,15 +17,15 @@
 
 ## Исполняемый план полного продукта
 
-1. **DONE / Phase 0:** ТЗ/API-контракты, Python3.13/uv lock, Compose/PostgreSQL/Redis/RabbitMQ/mock services, health и миграции0001–0003 проверены. Core checkpoint готовится к commit/push.
+1. **DONE / Phase 0:** ТЗ/API-контракты, Python3.13/uv lock, полный Compose и миграции0001–0005 проверены. Clean replay и repeatable seed подтверждены. Core и последующие проверенные блоки отправлены в рабочую ветку.
 2. **DONE / Phase 1:** Argon2id/JWT, HttpOnly refresh rotation/revocation/sessions, login throttling, RBAC/object authorization; API/security regressions PASS.
 3. **DONE / Phase 2:** ledger/wallets/topup/holds, DB constraints/triggers и финансовые инварианты. Настоящий PostgreSQL, Hypothesis и запреты изменения/поздних проводок подтверждены тестами.
 4. **DONE / Phase 3:** P2P/payments/idempotency/refunds; 100 одинаковых HTTP-команд→один эффект, 20 списаний→10/10, встречные переводы и refund/cancel/capture races PASS.
-5. **IMPLEMENTED / Phases 4–5:** outbox confirms/inbox, Celery/scheduler, HMAC/retry/DLQ, providers/risk/UNKNOWN реализованы;23 events-теста и provider acceptance PASS. Осталась полная Compose-проверка worker/beat и сценариев UI.
-6. **PENDING / Phases 6–7:** сверка и CSV, audit/timeline, ограниченные Chaos Lab эксперименты с фактическими результатами/инвариантами. Проверка: все10 сценариев и восстановление.
-7. **IN PROGRESS independently / Phase 8:** React UI всех экранов, настоящие API, формы/таблицы/empty/loading/error, Payment Inspector и Chaos UI. Проверка: lint/typecheck/unit/build, headed Playwright реальные сценарии.
-8. **PENDING / Phase 9:** JSON logs/correlation/metrics/OTel, Grafana, coverage≥90%ядро/≥80%backend, Locust измерения, Database/QA/Security reviews. Исправить все блокирующие дефекты, не придумывать результаты.
-9. **PENDING / Phase 10:** English README+Russian README, diagrams/runbooks/APIexamples,13 interview документов и≥50 содержательных QA,10min demo, финальный CI и PR если существует корректная basebranch.
+5. **DONE / Phases 4–5:** outbox confirms/inbox, Celery/scheduler, HMAC/retry/DLQ, providers/risk/UNKNOWN проверены. Полный Compose подтвердил worker/beat, runtime role, scheduled reconciliation и outbox/inbox. UI проверяет UNKNOWN recovery через исходного provider.
+6. **DONE / Phases 6–7:** сверка/CSV, audit/timeline, все10 bounded Chaos experiments, RBAC, shutdown/stale recovery и инварианты проходят общий backend suite. Scope клиентских disconnect указан в UI/runbook.
+7. **IN PROGRESS / Phase 8:** React13screens/unit28/lint/typecheck/build PASS; real product headless9PASS, headed acceptance завершается. Учесть реальный scheduler при проверке UNKNOWN. Проверить9PNG/WebM/trace в каждом режиме.
+8. **IN PROGRESS / Phase 9:** logs/correlation/OTel/Grafana и committed cross-process metrics реализованы; backend181PASS, coverage83%/ledger90%, DB26PASS, metrics9PASS, recovery2PASS. Далее: после headed обновить runtime image, bounded Locust30s1→5→10users, затем итоговый полный coverage и product CI. Fault tests не запускать параллельно load/E2E.
+9. **IN PROGRESS / Phase 10:** English/Russian README, diagrams/runbooks,13 interview documents и55QA подготовлены. Сверить факты с итоговыми проверками, commit/push, дождаться product CI, подготовить PR без merge при доступной basebranch.
 
 Зависимости: финансовые шаги2–6 выполняются последовательно через утверждённые DB/API-контракты; infra/frontend независимы. У каждого файла один владелец, root управляет интеграцией и Git. Каждый завершённый блок проверяется, документируется, commit/push; затем работа продолжается без запроса обычных подтверждений.
 

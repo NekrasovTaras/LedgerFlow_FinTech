@@ -2,7 +2,7 @@
   "name": "ledgerflow-fintech",
   "version": "0.0.0",
   "private": true,
-  "description": "LedgerFlow development bootstrap and QA harness; product specification pending.",
+  "description": "LedgerFlow development tooling and visible product/browser verification.",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -13,9 +13,13 @@
     "preflight": "pwsh -NoProfile -File scripts/preflight.ps1",
     "qa:serve": "node scripts/harness-server.mjs",
     "browser:install": "node scripts/playwright.mjs install chromium",
-    "test:e2e": "node scripts/playwright.mjs test",
-    "test:e2e:headed": "node scripts/playwright.mjs test --headed",
-    "test:report": "node scripts/playwright.mjs show-report artifacts/playwright/headed/html-report --host 127.0.0.1"
+    "test:e2e": "node scripts/playwright.mjs test --config playwright.product.config.mjs",
+    "test:e2e:headed": "node scripts/playwright.mjs test --config playwright.product.config.mjs --headed",
+    "test:bootstrap": "node scripts/playwright.mjs test --config playwright.config.mjs",
+    "test:bootstrap:headed": "node scripts/playwright.mjs test --config playwright.config.mjs --headed",
+    "test:product": "node scripts/playwright.mjs test --config playwright.product.config.mjs",
+    "test:product:headed": "node scripts/playwright.mjs test --config playwright.product.config.mjs --headed",
+    "test:report": "node scripts/playwright.mjs show-report artifacts/product-playwright/headed/html-report --host 127.0.0.1"
   },
   "devDependencies": {
     "@playwright/test": "1.65.1"

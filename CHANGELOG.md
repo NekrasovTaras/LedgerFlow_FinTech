@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Product acceptance
+
+- Added nine real API-backed Playwright workflows covering authentication, wallets, payment/refund, UNKNOWN recovery, idempotent transfers, authorization, reconciliation CSV, Chaos Lab and mobile navigation.
+- Made the standard E2E commands run the product; retained explicit bootstrap commands and separate artifacts.
+- Added product CI gates for backend coverage, frontend quality, dependency audit, image builds and full Compose browser acceptance.
+
 ### Operational verification
 
 - Exported committed cross-process business metrics and payment processing durations from PostgreSQL, with actual provider HTTP latency instrumentation and expanded Grafana panels.

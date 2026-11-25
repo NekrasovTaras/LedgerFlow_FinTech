@@ -32,7 +32,7 @@ jobs:
       - name: Install Chromium and system dependencies
         run: npm run browser:install -- --with-deps
       - name: Run browser behavior tests
-        run: npm run test:e2e
+        run: npm run test:bootstrap
       - name: Verify retained browser evidence
         run: npm run check:evidence
       - name: Upload browser evidence

@@ -1,5 +1,12 @@
 # Прогресс разработки
 
+## 2026-11-25 — Product browser acceptance и quality pipeline
+
+- Полный real-product headless набор: **9/9 PASS, 1.2m**, evidence verifier проверил9PNG/9WebM/9trace и HTML/JSON; trace ZIP CRC также проверены. Это приложение5173 через настоящий API, а не bootstrap fixture.
+- Исправлены две ошибки test locators: datalist input имеет рольcombobox, empty wallets имеют два Create wallet. Дополнительно учтено реальное фоновое восстановление UNKNOWN scheduler: тест требует исходныйUNKNOWN, original-provider reconciliation, один balanced capture, правильные balances/hold; допускает manual или background recovery. Targeted headless regression PASS1/1,19.4s. Полный headed600ms повтор продолжается, не объявляется успешным заранее.
+- `npm run test:e2e` и `:headed` направлены на product config; старый harness доступен через `test:bootstrap`/`:headed`, bootstrap CI использует явный alias. Product workflow включает PostgreSQL gates80%/ledger90%, frontend/lint/build/audit, images и full Compose+9E2E, reports/secret signatures/diff checks.
+- Root tooling `npm run check` PASS:18 required files,8roles,10JSsyntaxchecks; Compose config PASS. Новый product workflow ещё не запускался на GitHub. Метрики и retry уже отправлены коммитом `31b03db`.
+
 ## 2026-11-25 — Метрики фоновых процессов и transaction retry
 
 - **9 observability tests passed, 5.98s**: API `/metrics`, видимость committed/rollback фактов PostgreSQL, durable business counters, processing histogram, provider timeout/retry instrumentation и bounded labels. Evidence `artifacts/observability-tests.xml/.log`.

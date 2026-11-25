@@ -78,4 +78,4 @@ for (const file of sources) {
   assert.equal(result.status, 0, `${relative(root, file)} syntax failed:\n${result.stderr}`);
 }
 console.log(`Bootstrap checks passed: ${requiredPaths.length} required files, ${expectedRoles.size} role contracts, pinned dependency lock and ${sources.length} JavaScript syntax checks.`);
-console.log('Product requirements, financial scenarios and Chaos Lab remain pending the full specification.');
+console.log('Bootstrap tooling checks only; product checks and results are recorded separately in PROGRESS.md.');
