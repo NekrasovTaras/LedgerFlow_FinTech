@@ -28,10 +28,15 @@ from app.infrastructure.database import SessionLocal, engine
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     from app.bootstrap import validate_runtime_mode
+    from app.modules.chaos.application import recover_stale_experiments, shutdown_experiments
 
     await validate_runtime_mode()
-    yield
-    await engine.dispose()
+    await recover_stale_experiments()
+    try:
+        yield
+    finally:
+        await shutdown_experiments()
+        await engine.dispose()
 
 
 app = FastAPI(
@@ -140,8 +145,10 @@ async def metrics() -> Response:
 
 from app.api import router as api_router  # noqa: E402
 from app.modules.auth import router as auth_router  # noqa: E402
+from app.modules.chaos.presentation import router as chaos_router  # noqa: E402
 from app.modules.operations.presentation import router as operations_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(api_router)
 app.include_router(operations_router)
+app.include_router(chaos_router)

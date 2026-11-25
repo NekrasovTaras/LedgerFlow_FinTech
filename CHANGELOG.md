@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Chaos Lab
+
+- Added ten sandbox-only bounded experiments with persisted timelines, observed results, financial invariant checks and recovery instructions.
+- Integrated asynchronous experiment lifecycle, single-run advisory locking and stale/shutdown recovery.
+- Added a read-only invariants API for authorized operational checks and benchmark verification.
+
 ### Database hardening
 
 - Froze the initial schema and financial trigger migration in version-local SQL assets so future ORM edits cannot change historical replay.

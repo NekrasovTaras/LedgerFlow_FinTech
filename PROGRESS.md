@@ -1,5 +1,13 @@
 # Прогресс разработки
 
+## 2026-11-25 — Общая backend-проверка и Chaos Lab
+
+- **181 passed, 275.19s**, общий прогон всех текущих backend tests, включая все10 bounded Chaos experiments и PostgreSQL concurrency/property-based checks. `artifacts/backend-full-tests.xml`, `.log`, `backend-coverage.xml`.
+- Измеренное branch coverage: **83% backend**, **90% ledger**, отдельный `coverage report --include='*/app/modules/ledger/*' --fail-under=90` exit0. Worker entrypoints в этом прогоне не покрыты; их реальный Compose запуск подтверждён отдельно. Поздние добавления требуют итогового повторного coverage-прогона.
+- DB hardening commit **`a8d82da`** отправлен в `origin/feat/ledgerflow-build`. Без force push/merge.
+- Chaos router/lifespan подключены; проверены реальные результаты, bounded duration, RBAC/sandbox, stale/shutdown recovery. Broker/Redis эксперименты разрывают собственное клиентское соединение, worker-before-ack разрывает consumer connection; остановка OS/container процесса не заявляется.
+- Product headless E2E запущен на полном Compose. Первые финансовые сценарии подтвердили исправленный причинный порядок Timeline и immutable journal. Итоговый статус browser suite ещё ожидается.
+
 ## 2026-11-25 — Проверена защита счетов и полный Compose
 
 - `ledgerflow` и `ledgerflow_test` последовательно обновлены до `0005`, без сброса существующих данных.

@@ -33,7 +33,7 @@ from app.modules.auth import current_user
 from app.modules.ledger.application import FINANCIAL_READERS, require_roles, serialize, wallet_for
 from app.modules.payments.application import payment_view
 from app.modules.providers.application import provider_url
-from app.modules.reconciliation.application import run_reconciliation
+from app.modules.reconciliation.application import run_reconciliation, verify_invariants
 
 router = APIRouter(prefix="/api/v1", tags=["Operations"])
 Actor = Annotated[User, Depends(current_user)]
@@ -217,6 +217,13 @@ async def settings(actor: Actor) -> dict[str, Any]:
             "refund_policy": "Cannot exceed captured amount; compensating entries only.",
         },
     }
+
+
+@router.get("/invariants")
+async def invariants(actor: Actor) -> dict[str, Any]:
+    require_roles(actor, FINANCIAL_READERS)
+    async with SessionLocal() as session:
+        return await verify_invariants(session)
 
 
 @router.get("/system/health")
