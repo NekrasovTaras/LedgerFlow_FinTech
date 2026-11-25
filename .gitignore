@@ -23,6 +23,10 @@ test-results/
 playwright-report/
 blob-report/
 .cache/
+.tools/
+.hypothesis/
+htmlcov/
+*.coverage.xml
 *.log
 
 # Secrets, local databases and local configuration

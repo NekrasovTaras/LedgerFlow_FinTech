@@ -1,5 +1,34 @@
 # Прогресс разработки
 
+## 2026-11-25 — Стабильный core checkpoint
+
+- Общий выбранный прогон backend/auth/ledger/payments/authorization/events/operations/security/mock: **146 passed, 0 failed**,57.25s; `artifacts/core-checkpoint-tests.xml` и лог. Позднее добавленный targeted report-control regression отдельно входит в **9 passed** mock suite; результаты не суммируются как один запуск.
+- Ruff core/tests/migrations/mock/infrastructure PASS; mypy38sourcefiles PASS. Незавершённый Chaos модуль исключён из core checkpoint и проверяется отдельно после интеграции.
+- Frontend:28 tests/lint/typecheck/build PASS на Windows; чистый Linux `npm ci` и Docker frontend build PASS,0audit vulnerabilities. Optional npm lock зависимости восстановлены; версии манифеста сохранены, образы Node/Nginx закреплены digest.
+- Docker Engine восстановлен,6coreinfrahealthy. Mock API дополнен адресной report-инъекцией по operation_id и чтением исходного receiver fail-control;9mocktests PASS.
+- Runtime `ledgerflow_app` отделён от owner миграций. Фактические wallet/topup/hold/release/transfer проверены под runtime-role в rollback-транзакции; DDL/TEMP/TRUNCATE и изменение immutable journal/postings запрещены. Вызовы остаются SECURITY INVOKER.
+- Security regression теперь проверяет запрет analyst resolve на реально существующем платеже, не только404для неизвестного UUID. Потоковый body limit, sandbox identities и provider-receipt validation также проходят общий прогон.
+- Следующий шаг после commit/push этого блока: интегрировать10Chaosexperiments, запустить Compose worker/beat/API/UI целиком, UI/headed E2E, измерить coverage/Locust и завершить документацию. Продукт целиком ещё не готов.
+
+## 2026-11-25 — Продолжение после лимитов: подтверждённые результаты
+
+- Работа возобновлена с исходной ветки `feat/ledgerflow-build`; ранее созданные файлы сохранены, проект не пересоздавался. Последний отправленный коммит пока `3b599c6`; продуктовые изменения готовятся к первому checkpoint commit.
+- Подтверждены сохранёнными JUnit: auth+ledger41 PASS; financial acceptance52 PASS; events23 PASS; operations11 PASS. Отдельный повтор auth/payments/security regression53 PASS35.43s (`artifacts/security-regression-tests.xml`). Это разные прогоны, их пересекающиеся тесты не суммируются в общий счёт.
+- Frontend:28 unit/component PASS, lint/typecheck/build PASS на Windows. Чистая Linux/npm/Docker установка выявила optional-lock dependency issue; требуется подтвердить исправление Linux lockfile/build.
+- PostgreSQL миграции0001–0003: ledgerconstraints, removal избыточного journal FOR SHARE, persistent sandbox user flag. Auth/current_user/refresh блокируют sandbox identities вне sandbox; startup с такими данными failclosed.
+- Security review: исправлены analyst mutations, streaming1MiB input guard, provider receipt identity/amount/currency verification. TEMP-trigger обход projection guard подтверждён rollback-probe и закрыт nonsuperuser runtime role + REVOKE TEMP/CREATE; проверка фактической роли прошла.
+- Outbox/inbox/Rabbit publisher confirms, leased retry, HMAC/webhook retry/DLQ и worker entrypoints реализованы и отдельно протестированы. Полная Compose интеграция runtime roles/worker/beat ещё требует финального прогона.
+- При текущем возобновлении Docker Engine недоступен; запускается установленный Docker Desktop без изменения глобальных настроек.
+- Следующий конкретный шаг: восстановить проектные контейнеры, пройти lint/mypy и релевантные регрессии, commit/push стабильного core-блока; затем завершить Chaos Lab10 сценариев, UI/E2E, coverage/benchmark и портфолио-документацию. Проект целиком не объявляется готовым.
+
+## 2026-11-24 — Полное ТЗ принято, реализация начата
+
+- Канонический текст: `docs/requirements/MASTER_SPEC.md`, 34 раздела. Ограничение «ТЗ ещё нет» снято; выбран заданный пользователем стек.
+- Стабильная исходная ревизия: `3b599c6`, рабочая ветка `feat/ledgerflow-build`, рабочее дерево до начала чистое.
+- Повторный preflight запущен; Python3.13 установлен наряду с системным3.14. Проект будет использовать3.13 через uv.
+- Работа: root — backend/financial integration; Architect — ADR/API/invariants; DevOps — lock/Compose/mock services/CI; Frontend — только frontend/**.
+- Следующая проверка: запуск PostgreSQL и миграций, строгие DB-инварианты, затем auth/ledger API тесты. Продукт пока не объявляется готовым.
+
 ## 2026-11-24 — Начальная подготовка
 
 Полное техническое задание ещё не получено. Продуктовая реализация LedgerFlow не начата.

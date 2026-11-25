@@ -1,0 +1,285 @@
+name: ledgerflow
+
+x-app-environment: &app-environment
+  SANDBOX_MODE: 'true'
+  DATABASE_URL: postgresql+asyncpg://ledgerflow_app:${RUNTIME_DB_PASSWORD:-ledgerflow_app}@postgres:5432/ledgerflow
+  REDIS_URL: redis://redis:6379/0
+  RABBITMQ_URL: amqp://ledgerflow:${RABBITMQ_PASSWORD:-ledgerflow}@rabbitmq:5672/
+  JWT_SECRET: ${JWT_SECRET:-sandbox-jwt-signing-key-not-for-production-2026}
+  WEBHOOK_SECRET: ${WEBHOOK_SECRET:-sandbox-webhook-signing-secret}
+  PROVIDER_ALPHA_URL: http://provider-a:9001
+  PROVIDER_BETA_URL: http://provider-b:9002
+  WEBHOOK_RECEIVER_URL: http://receiver:9003/events
+  CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
+  OTEL_SERVICE_NAME: ledgerflow-backend
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+
+x-backend: &backend
+  image: ledgerflow-backend:local
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  environment: *app-environment
+  init: true
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  networks: [ledgerflow]
+  logging:
+    driver: json-file
+    options: {max-size: '10m', max-file: '3'}
+
+x-mock: &mock
+  image: ledgerflow-mock:local
+  build:
+    context: .
+    dockerfile: mock-services/Dockerfile
+  init: true
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  networks: [ledgerflow]
+
+services:
+  postgres:
+    image: postgres:17.12-alpine3.24@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
+    environment:
+      POSTGRES_USER: ledgerflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledgerflow}
+      POSTGRES_DB: ledgerflow
+    ports: ['127.0.0.1:55432:5432']
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U ledgerflow -d ledgerflow']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+  redis:
+    image: redis:7.4.12-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    command: [redis-server, --appendonly, 'yes']
+    ports: ['127.0.0.1:56379:6379']
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+  rabbitmq:
+    image: rabbitmq:4.1.8-management-alpine@sha256:71dc98bb14d16c7240efc1d9b6356e5ac1470a51c63e8cce16f246e09748a995
+    hostname: ledgerflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ledgerflow
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-ledgerflow}
+    ports: ['127.0.0.1:5673:5672', '127.0.0.1:15673:15672']
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+  migrate:
+    <<: *backend
+    command: [sh, -c, 'python -m app.bootstrap && python /app/runtime_role.py']
+    environment:
+      <<: *app-environment
+      DATABASE_URL: postgresql+asyncpg://ledgerflow:${POSTGRES_PASSWORD:-ledgerflow}@postgres:5432/ledgerflow
+      RUNTIME_DB_PASSWORD: ${RUNTIME_DB_PASSWORD:-ledgerflow_app}
+    restart: 'no'
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  backend:
+    <<: *backend
+    ports: ['127.0.0.1:8000:8000']
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      provider-a: {condition: service_healthy}
+      provider-b: {condition: service_healthy}
+      receiver: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  worker:
+    <<: *backend
+    command: [celery, -A, 'app.workers.celery_app:celery_app', worker, --loglevel=info, --concurrency=2]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, 'celery -A app.workers.celery_app:celery_app inspect ping --destination "celery@$$HOSTNAME" --timeout=3']
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 20s
+
+  scheduler:
+    <<: *backend
+    command: [celery, -A, 'app.workers.celery_app:celery_app', beat, --loglevel=info, '--schedule=/tmp/celerybeat-schedule', '--pidfile=/tmp/celerybeat.pid']
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import os; from pathlib import Path; os.kill(int(Path('/tmp/celerybeat.pid').read_text()), 0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  outbox:
+    <<: *backend
+    command: [python, -m, app.workers.outbox]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      rabbitmq: {condition: service_healthy}
+
+  frontend:
+    build: {context: ./frontend, dockerfile: Dockerfile}
+    image: ledgerflow-frontend:local
+    ports: ['127.0.0.1:5173:5173']
+    depends_on:
+      backend: {condition: service_healthy}
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+  provider-a:
+    <<: *mock
+    environment:
+      SANDBOX_MODE: 'true'
+      SERVICE_NAME: alpha
+      SERVICE_KIND: provider
+      STATE_PATH: /data/receipts.sqlite3
+    ports: ['127.0.0.1:9001:9001']
+    volumes: [provider-a-data:/data]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9001/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  provider-b:
+    <<: *mock
+    command: [uvicorn, 'service:app', --host, '0.0.0.0', --port, '9002', --no-access-log]
+    environment:
+      SANDBOX_MODE: 'true'
+      SERVICE_NAME: beta
+      SERVICE_KIND: provider
+      STATE_PATH: /data/receipts.sqlite3
+    ports: ['127.0.0.1:9002:9002']
+    volumes: [provider-b-data:/data]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9002/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  receiver:
+    <<: *mock
+    command: [uvicorn, 'service:app', --host, '0.0.0.0', --port, '9003', --no-access-log]
+    environment:
+      SANDBOX_MODE: 'true'
+      SERVICE_NAME: receiver
+      SERVICE_KIND: receiver
+      STATE_PATH: /data/events.sqlite3
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-sandbox-webhook-signing-secret}
+    ports: ['127.0.0.1:9003:9003']
+    volumes: [receiver-data:/data]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9003/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  prometheus:
+    image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06
+    profiles: [monitoring]
+    command: ['--config.file=/etc/prometheus/prometheus.yml', '--storage.tsdb.retention.time=7d']
+    ports: ['127.0.0.1:9090:9090']
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:9090/-/ready']
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+  grafana:
+    image: grafana/grafana:13.3.1@sha256:0615ec4fbd4072004b7d86b46ded63013a74b7d6eb1119273dd89e8fa25c13cf
+    profiles: [monitoring]
+    environment:
+      GF_SECURITY_ADMIN_USER: sandbox-admin
+      GF_SECURITY_ADMIN_PASSWORD: sandbox-observability-password
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    ports: ['127.0.0.1:3000:3000']
+    volumes:
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:3000/api/health']
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    depends_on: [prometheus]
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
+    profiles: [monitoring]
+    command: ['--config=/etc/otelcol/config.yaml']
+    volumes: ['./infrastructure/otel/config.yaml:/etc/otelcol/config.yaml:ro']
+    ports: ['127.0.0.1:4318:4318']
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+    networks: [ledgerflow]
+
+networks:
+  ledgerflow:
+    name: ledgerflow-sandbox
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:
+  provider-a-data:
+  provider-b-data:
+  receiver-data:
+  prometheus-data:
+  grafana-data:

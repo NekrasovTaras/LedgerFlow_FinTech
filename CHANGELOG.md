@@ -4,6 +4,14 @@
 
 ## Unreleased
 
+### Product core
+
+- Added FastAPI authentication, rotating/revocable sessions, PostgreSQL RBAC and object authorization.
+- Added immutable double-entry RUB journal, trigger-maintained projections, holds, P2P transfers, durable idempotency, concurrent payments and compensating refunds.
+- Added local providers, safe UNKNOWN reconciliation, risk review, transactional outbox/inbox, signed webhook retries and dead-letter handling.
+- Added operational API, reconciliation CSV, React dashboard, reproducible locked dependencies and project-scoped Docker services.
+- Fixed security findings covering analyst mutations, streamed request limits, sandbox identities, receipt validation and database temporary-trigger privileges.
+
 ### Добавлено
 
 - Проектные инструкции автономной разработки, восемь TOML-профилей агентов Codex и ограничение параллелизма.

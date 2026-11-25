@@ -5,7 +5,7 @@
 - Routine development, project dependency installation, tests, commits and pushes are authorized.
 - Never disclose secrets, change global security settings, force-push or automatically merge into main.
 - Communicate with the user in Russian. Code and technical identifiers use English.
-- The full product specification has not arrived. Do not invent product requirements or report the test fixture as LedgerFlow functionality.
+- The full specification is saved in docs/requirements/MASTER_SPEC.md. Implement it in dependency order; never report the bootstrap test fixture as product functionality.
 
 ## Start and resume
 1. Read README.md, GOALS.md, ROADMAP.md, PLANS.md and PROGRESS.md.
@@ -26,7 +26,12 @@
 - Use exact decimal/integer representations for money when implementing the specified financial domain; never binary floating point for ledger amounts.
 - Record significant architecture decisions under docs/architecture/decisions/ with status and rationale.
 - Use targeted, meaningful tests; never fabricate tests, coverage, results or authorship.
-- Run npm run check and the relevant Playwright suite for bootstrap tooling changes. Product-specific checks will be defined after the specification.
+- Use Python 3.13, FastAPI, SQLAlchemy 2, PostgreSQL and the approved modular monolith stack. PostgreSQL is the source of financial truth; Redis is never an authoritative balance store.
+- Financial postings must balance, remain immutable at database level, and update balance projections atomically. Use deterministic account lock ordering and durable PostgreSQL idempotency.
+- Provider UNKNOWN must be reconciled before fallback; never claim distributed exactly-once delivery. Use outbox/inbox for at-least-once transport and idempotent business effects.
+- Sandbox only: synthetic funds, local providers and allowlisted webhook receivers; no real payments, external credentials or arbitrary network destinations.
+- Run Ruff, mypy, Pytest and PostgreSQL integration/concurrency tests for backend changes; frontend lint/typecheck/build and relevant Playwright scenarios for UI changes. Record measured coverage, never invented percentages.
+- README.md is professional English; README.ru.md and interview material are Russian.
 - For visible scenarios use npm run test:e2e:headed, which records screenshots, video, trace and HTML reports.
 - Use Computer Use for meaningful PyCharm navigation and UI inspection. Edit code through filesystem tools; do not simulate activity.
 - Keep credentials, local databases and generated artifacts out of Git. Review staged changes before each commit.

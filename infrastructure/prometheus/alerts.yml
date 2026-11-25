@@ -1,0 +1,20 @@
+groups:
+  - name: ledgerflow-sandbox
+    rules:
+      - alert: LedgerFlowApiUnavailable
+        expr: up{job="ledgerflow-api"} == 0
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: LedgerFlow API scrape failed
+      - alert: LedgerFlowFinancialInvariantViolation
+        expr: ledgerflow_invariant_violations_total > 0
+        labels: {severity: critical}
+        annotations:
+          summary: Financial invariant verification reported a violation
+      - alert: LedgerFlowOutboxBacklog
+        expr: ledgerflow_outbox_backlog > 100
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: More than 100 events await delivery

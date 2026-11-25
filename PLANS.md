@@ -13,14 +13,21 @@
 7. **DONE:** проверить staged diff и отсутствие секретов/генерируемых файлов, создать Conventional Commit и push.
 8. **DONE:** записать реальные результаты, ссылку на commit, успешный GitHub Actions и ограничения в `PROGRESS.md`.
 
-Следующее внешнее событие — получение полного ТЗ. Продуктовые решения до него не принимаются.
+Полное ТЗ получено и сохранено в `docs/requirements/MASTER_SPEC.md`; подготовка M0 не повторяется.
 
-## M1 — Следующая задача после получения ТЗ
+## Исполняемый план полного продукта
 
-1. Сохранить требования в проектной документации и определить критерии приёмки.
-2. Поручить Architect, Backend и Database Engineer согласовать контракты и финансовые инварианты; Security Engineer — модель угроз.
-3. Утвердить архитектуру через ADR и составить конкретные небольшие блоки реализации.
-4. Назначить непересекающиеся файлы исполнителям и обновить roadmap по фактическому ТЗ.
+1. **DONE / Phase 0:** ТЗ/API-контракты, Python3.13/uv lock, Compose/PostgreSQL/Redis/RabbitMQ/mock services, health и миграции0001–0003 проверены. Core checkpoint готовится к commit/push.
+2. **DONE / Phase 1:** Argon2id/JWT, HttpOnly refresh rotation/revocation/sessions, login throttling, RBAC/object authorization; API/security regressions PASS.
+3. **DONE / Phase 2:** ledger/wallets/topup/holds, DB constraints/triggers и финансовые инварианты. Настоящий PostgreSQL, Hypothesis и запреты изменения/поздних проводок подтверждены тестами.
+4. **DONE / Phase 3:** P2P/payments/idempotency/refunds; 100 одинаковых HTTP-команд→один эффект, 20 списаний→10/10, встречные переводы и refund/cancel/capture races PASS.
+5. **IMPLEMENTED / Phases 4–5:** outbox confirms/inbox, Celery/scheduler, HMAC/retry/DLQ, providers/risk/UNKNOWN реализованы;23 events-теста и provider acceptance PASS. Осталась полная Compose-проверка worker/beat и сценариев UI.
+6. **PENDING / Phases 6–7:** сверка и CSV, audit/timeline, ограниченные Chaos Lab эксперименты с фактическими результатами/инвариантами. Проверка: все10 сценариев и восстановление.
+7. **IN PROGRESS independently / Phase 8:** React UI всех экранов, настоящие API, формы/таблицы/empty/loading/error, Payment Inspector и Chaos UI. Проверка: lint/typecheck/unit/build, headed Playwright реальные сценарии.
+8. **PENDING / Phase 9:** JSON logs/correlation/metrics/OTel, Grafana, coverage≥90%ядро/≥80%backend, Locust измерения, Database/QA/Security reviews. Исправить все блокирующие дефекты, не придумывать результаты.
+9. **PENDING / Phase 10:** English README+Russian README, diagrams/runbooks/APIexamples,13 interview документов и≥50 содержательных QA,10min demo, финальный CI и PR если существует корректная basebranch.
+
+Зависимости: финансовые шаги2–6 выполняются последовательно через утверждённые DB/API-контракты; infra/frontend независимы. У каждого файла один владелец, root управляет интеграцией и Git. Каждый завершённый блок проверяется, документируется, commit/push; затем работа продолжается без запроса обычных подтверждений.
 
 ## Правила исполнения
 
