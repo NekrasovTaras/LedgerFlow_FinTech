@@ -1,6 +1,26 @@
 # Прогресс разработки
 
+## 2026-11-25 — Проверена защита счетов и полный Compose
+
+- `ledgerflow` и `ledgerflow_test` последовательно обновлены до `0005`, без сброса существующих данных.
+- DB review: **26 passed, 23.54s** — реальные restricted LOGIN-role probes и clean replay `0001 → 0005` в новой изолированной БД; повторный seed не дублирует пользователей/пополнения. Новая БД удалена после проверки, существующие volumes сохранены. Evidence: `artifacts/tests/database-role-migrations.xml` и `.log`.
+- Подтверждены запреты overdraft пользовательского счёта, несовпадающего owner кошелька, изменения wallet identity и NULL-key системного funding/settlement счёта. Ruff check/format PASS; общий mypy PASS,43 source files.
+- `docker compose build backend frontend` и `docker compose up -d` PASS. `migrate` exit0; API/UI/worker/scheduler healthy. Runtime SQL подтверждает `ledgerflow_app` без повышенных привилегий/DDL/TEMP. Outbox/inbox по6 записей; beat реально выполнил сверку: COMPLETED, инварианты true, расхождений0. Evidence: `artifacts/compose-*.log`, status/runtime-role JSON.
+- Общий backend coverage-прогон продолжается; продуктовые E2E и нагрузка ждут завершения тестов с provider fault controls. Новый metrics review устраняет разрыв наблюдаемости между API и фоновыми процессами. Итоговый product CI ещё не заявляется успешным.
+
+## 2026-11-25 — Текущая точка продолжения: интеграция Chaos и DB review
+
+- Последний отправленный стабильный core: `81764f3`; baseline GitHub Actions45578522263 success. Продуктовый CI80%coverage пока не отправлен, его результаты не подменяются bootstrap-проверкой.
+- Chaos Lab реализован:10реальных boundedэкспериментов,20/20тестов PASS28.20s, включая100/20 и shutdown/stale/RBAC. Router/lifespan уже подключены в рабочем дереве; требуется перезапуск runtime и UI/E2E.
+- Database review:19permission/regressionтестов PASS под отдельной одноразовойLOGINролью; поздний набор20PASS добавилCREATE SCHEMA. Добавлены migration0004 account/walletpolicy и0005 strictNULLpolicy; их head/cleanreplay и новые регрессии требуют подтверждения после восстановления Docker.
+- Initial migration0001 заморожена в version-local0001_schema.sql/0001_ledger.sql; не использует будущую ORMmetadata. Проверить replay на новой отдельной БД, не сбрасывая текущие volumes.
+- Timeline/outbox/audit теперь получают фактический UTC timestamp при записи события, чтобы одинаковый transaction-start timestamp не менял причинный порядок Payment Inspector.
+- Product Playwright:9реальныхсценариев+headedconfig готовы, ещё не запускались. Locust30s1→5→10users подготовлен; измерения отсутствуют.
+- READMEEnglish/Russian,13interviewглав(55QA),runbooks готовы; финальные статусы/метрики ждут фактических проверок. Данные/изменения сохраняются, проект заново не создаётся.
+
 ## 2026-11-25 — Стабильный core checkpoint
+
+- **Последний стабильный отправленный коммит: `81764f3`**, `feat(platform): implement authenticated financial core and dashboard`. Push в `origin/feat/ledgerflow-build` успешен. Незавершённый Chaos и итоговый product CI не включены в этот checkpoint.
 
 - Общий выбранный прогон backend/auth/ledger/payments/authorization/events/operations/security/mock: **146 passed, 0 failed**,57.25s; `artifacts/core-checkpoint-tests.xml` и лог. Позднее добавленный targeted report-control regression отдельно входит в **9 passed** mock suite; результаты не суммируются как один запуск.
 - Ruff core/tests/migrations/mock/infrastructure PASS; mypy38sourcefiles PASS. Незавершённый Chaos модуль исключён из core checkpoint и проверяется отдельно после интеграции.

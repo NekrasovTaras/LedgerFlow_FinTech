@@ -4,6 +4,12 @@
 
 ## Unreleased
 
+### Database hardening
+
+- Froze the initial schema and financial trigger migration in version-local SQL assets so future ORM edits cannot change historical replay.
+- Enforced account funding/overdraft policy, wallet-to-account owner/currency binding and immutable wallet identity, including explicit SQL NULL rejection.
+- Added real restricted-role and clean migration/seed replay regressions.
+
 ### Product core
 
 - Added FastAPI authentication, rotating/revocable sessions, PostgreSQL RBAC and object authorization.
@@ -23,4 +29,4 @@
 - GitHub Actions для проверок рабочей ветки.
 - Проверка наличия записей и изоляции headed/headless-артефактов; исправлена передача режима в Playwright workers.
 
-Продуктовые функции LedgerFlow пока не реализованы: полное ТЗ ожидается.
+Начальный проверочный стенд остаётся отдельной bootstrap-проверкой и не считается продуктовой функциональностью.

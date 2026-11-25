@@ -8,6 +8,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     String,
@@ -68,7 +69,21 @@ class LoginAttempt(Identified, Base):
 
 class LedgerAccount(Identified, Base):
     __tablename__ = "ledger_accounts"
-    __table_args__ = (CheckConstraint("currency = 'RUB'"),)
+    __table_args__ = (
+        CheckConstraint("currency = 'RUB'"),
+        UniqueConstraint("id", "owner_id", "currency", name="uq_ledger_account_identity"),
+        CheckConstraint(
+            "(kind IN ('USER_WALLET','MERCHANT_WALLET') AND owner_id IS NOT NULL "
+            "AND system_key IS NULL AND NOT allow_overdraft) OR "
+            "(kind = 'SYSTEM_FUNDING' AND owner_id IS NULL "
+            "AND system_key IS NOT NULL AND system_key = 'sandbox_funding' AND allow_overdraft) OR "
+            "(kind = 'SETTLEMENT' AND owner_id IS NULL "
+            "AND system_key IS NOT NULL AND system_key = 'settlement' AND NOT allow_overdraft) OR "
+            "(kind = 'SYSTEM' AND owner_id IS NULL "
+            "AND system_key IS NOT NULL AND NOT allow_overdraft)",
+            name="ck_ledger_account_policy",
+        ),
+    )
     name: Mapped[str] = mapped_column(String(120))
     owner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
     kind: Mapped[str] = mapped_column(String(40))
@@ -96,6 +111,11 @@ class Wallet(Identified, Base):
     __table_args__ = (
         CheckConstraint("currency = 'RUB'"),
         CheckConstraint("status IN ('ACTIVE','BLOCKED')"),
+        ForeignKeyConstraint(
+            ["account_id", "owner_id", "currency"],
+            ["ledger_accounts.id", "ledger_accounts.owner_id", "ledger_accounts.currency"],
+            name="fk_wallet_account_identity",
+        ),
     )
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     account_id: Mapped[str] = mapped_column(ForeignKey("ledger_accounts.id"), unique=True)

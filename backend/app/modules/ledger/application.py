@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import json
 from collections.abc import Awaitable, Callable, Sequence
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi.encoders import jsonable_encoder
@@ -96,11 +97,14 @@ async def create_wallet(
 ) -> Wallet:
     if currency != "RUB":
         raise AppError("UNSUPPORTED_CURRENCY", "Only RUB is supported.", 422)
+    owner = await session.get(User, owner_id)
+    if owner is None:
+        raise AppError("OWNER_NOT_FOUND", "Wallet owner not found.", 404)
     account = LedgerAccount(
         id=new_id(),
         name=name,
         owner_id=owner_id,
-        kind="USER_WALLET",
+        kind="MERCHANT_WALLET" if owner.role == "merchant" else "USER_WALLET",
         currency=currency,
         allow_overdraft=False,
     )
@@ -170,6 +174,7 @@ def event(session: AsyncSession, event_type: str, payload: dict[str, Any]) -> Ou
         payload=jsonable_encoder({**payload, "correlation_id": correlation_id.get()}),
         status="PENDING",
         attempts=0,
+        created_at=datetime.now(UTC),
     )
     session.add(row)
     return row
@@ -189,6 +194,7 @@ def audit(
             resource_id=resource_id,
             correlation_id=correlation_id.get(),
             data=data or {},
+            created_at=datetime.now(UTC),
         )
     )
 
@@ -215,6 +221,7 @@ def timeline(
             correlation_id=correlation_id.get(),
             trace_id=f"{trace_id:032x}" if trace_id else "",
             data=data or {},
+            created_at=datetime.now(UTC),
         )
     )
 

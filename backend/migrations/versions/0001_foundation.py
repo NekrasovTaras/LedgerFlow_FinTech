@@ -3,8 +3,6 @@ from pathlib import Path
 
 from alembic import op
 
-from app.infrastructure.models import Base
-
 revision = "0001"
 down_revision = None
 branch_labels = None
@@ -12,11 +10,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    Base.metadata.create_all(op.get_bind())
-    source = Path(__file__).resolve().parents[2] / "app/infrastructure/ledger_constraints.sql"
-    for statement in source.read_text(encoding="utf-8").split("-- statement-break"):
-        if statement.strip():
-            op.execute(statement)
+    # Historical revisions must not import future ORM metadata or mutable SQL.
+    directory = Path(__file__).resolve().parent
+    for name in ("0001_schema.sql", "0001_ledger.sql"):
+        for statement in (directory / name).read_text(encoding="utf-8").split("-- statement-break"):
+            if statement.strip():
+                op.execute(statement)
 
 
 def downgrade() -> None:
