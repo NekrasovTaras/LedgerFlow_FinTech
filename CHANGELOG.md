@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### Measured load
+
+- Added a bounded Locust mixed workload, exact balance/idempotency verification and project-scoped resource evidence capture.
+- Recorded the actual 30-second local run:314 HTTP requests,0errors,9.99RPS; all ten actor balances and before/after ledger invariants passed. Environment, workload hash and measurement limits are documented.
+
 ### Product acceptance
 
 - Added nine real API-backed Playwright workflows covering authentication, wallets, payment/refund, UNKNOWN recovery, idempotent transfers, authorization, reconciliation CSV, Chaos Lab and mobile navigation.

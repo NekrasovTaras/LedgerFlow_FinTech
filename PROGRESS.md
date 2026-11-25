@@ -1,5 +1,14 @@
 # Прогресс разработки
 
+## 2026-11-25 — Реальная нагрузка, CI и найденная граница каталога
+
+- Product CI **6052663**: [45644225139](https://github.com/NekrasovTaras/LedgerFlow_FinTech/actions/runs/45644225139) **success** во всех3jobs. Linux backend195PASS35.00s, coverage84%backend/94%ledger; mocks9PASS; frontend и fullCompose9E2E PASS, Python audit0knownvulnerabilities. Evidence `artifacts/ci-product-6052663-backend.log`.
+- Финальный headed product run **9/9PASS187.75s**,600ms slowMo;9PNG/9WebM/9trace+HTML/JSON, ZIP CRC проверены. Реальные снимки перенесены в curated `docs/screenshots/` для документации. Это9реальныхproductflows, bootstrap4отдельно.
+- Metrics image пересобран; backend/outbox/worker/scheduler healthy, Grafana restarted. `/metrics` HTTP200 показывает committed outcomes/provider counts. Prometheus scrapeup1, Grafana databaseok. Evidence `artifacts/metrics-runtime-start.log`, `runtime-metrics.txt`, `prometheus-up.json`.
+- **Locust314HTTP,0errors,9.99RPS**, p50/p95/p99 **160/1000/1600ms**, bounded30s1→5→10users. Business subset224requests/7.13RPS. Все10actors имеют точные ожидаемые balances;34successfulpayments,62transfers,28cachedreplays без дополнительных проводок. Before/afterreconciliation COMPLETED, все6инвариантов0. Sourcehash/dirtyHEAD6052663/environment и реальные CSV/HTML/resources находятся в `artifacts/benchmarks/20261125-182418/`; публичный результат `docs/benchmarks/LOCAL_RUN.md`. Это короткое смешанное измерение, не предел capacity.
+- Локальный повтор на накопленной БД выявил **194PASS/1FAIL**: merchant directory возвращал первые100 без nextpage. Сохранены failed log/XML `artifacts/backend-final-tests.*`. Root добавляет SQL pagination/search и регрессии; Frontend Engineer — поиск/страницы в форме. Targeted merchant/auth regression28PASS11.68s, новый полный прогон199tests выполняется. Успех6052663 не выдаётся за результат нового source.
+- Для PR создана новая `origin/main` ровно на существующем bootstrap-коммите `3b599c6`; история и defaultbranch не изменялись, merge не выполнялся. GitHub plugin branch-write403, штатный Git push авторизованной учётной записи успешен.
+
 ## 2026-11-25 — Product browser acceptance и quality pipeline
 
 - Полный real-product headless набор: **9/9 PASS, 1.2m**, evidence verifier проверил9PNG/9WebM/9trace и HTML/JSON; trace ZIP CRC также проверены. Это приложение5173 через настоящий API, а не bootstrap fixture.
